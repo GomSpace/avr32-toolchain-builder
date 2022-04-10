@@ -147,7 +147,7 @@ install-note: install-tools
 
 
 .PHONY: install-supp-tools
-install-supp-tools stamps/install-supp-tools: install-autoconf install-automake install-gperf install-texinfo
+install-supp-tools stamps/install-supp-tools: stamps/install-autoconf stamps/install-automake stamps/install-gperf stamps/install-texinfo
 	[ -d stamps ] || mkdir stamps ;
 	touch stamps/install-supp-tools;
 
