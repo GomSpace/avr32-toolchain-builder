@@ -672,4 +672,6 @@ mpfr: gmp mpfr-$(CS_BASE)/ sudomode
 
 .PHONY : clean
 clean:
-	rm -rf build *-$(CS_BASE) binutils-* gcc-* newlib-* texinfo-* mpc-* $(LOCAL_BASE) dfu-programmer-* autoconf-* automake-* stamps source supp avr32-patches atmel-headers-*
+	rm -rf build stamps source supp
+	rm -rf gcc-* binutils-* newlib-* avr32-patches atmel-headers-* dfu-programmer-*
+	rm -rf autoconf-* automake-* gperf-* texinfo-*
