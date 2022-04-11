@@ -455,6 +455,7 @@ regen-binutils stamps/regen-binutils: stamps/patch-binutils stamps/install-supp-
 .PHONY: build-binutils
 build-binutils stamps/build-binutils: stamps/regen-binutils stamps/install-supp-tools
 	cd binutils-$(BINUTILS_VERSION) ; \
+	CFLAGS="-g -O2 -fcommon" \
 	./configure   --enable-maintainer-mode		\
 	--prefix="$(PREFIX)" --target=$(TARGET) --disable-nls		\
 	--disable-shared --disable-werror				\
@@ -549,7 +550,7 @@ CFLAGS_FOR_TARGET=-ffunction-sections -fdata-sections			\
 -Os -fno-unroll-loops
 CXXFLAGS_FOR_TARGET=$(CFLAGS_FOR_TARGET) -fno-exceptions
 
-CFLAGS="-O2 -g -fgnu89-inline"
+CFLAGS="-O2 -g -fgnu89-inline -fcommon"
 
 .PHONY: build-gcc
 build-gcc stamps/build-gcc: stamps/install-binutils stamps/prep-gcc
