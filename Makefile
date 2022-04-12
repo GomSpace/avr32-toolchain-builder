@@ -44,13 +44,8 @@ else
 PREFIX     ?= $(HOME)/avr32-tools-$(GIT_REV)
 endif
 
-ifeq ($(UNAME), Linux)
-PROCS  ?= $(shell grep -c ^processor /proc/cpuinfo)
-else ifeq ($(UNAME), Darwin)
-PROCS  ?= $(shell sysctl hw.ncpu | awk '{print $$2}')
-else
-PROCS  ?= 2
-endif
+PROCS := $(shell getconf _NPROCESSORS_ONLN || getconf NPROCESSORS_ONLN || \
+                 nproc || sysctl -n hw.ncpu || echo 4)
 
 SUPP_PREFIX = $(CURDIR)/supp
 PATH       := ${PREFIX}/bin:${SUPP_PREFIX}/bin:${PATH}
