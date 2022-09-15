@@ -1,3 +1,36 @@
+# GomSpace AVR32 Toolchain Builder
+
+This repo is a fork of
+[kuhlix/avr32-toolchain](https://github.com/kuhlix/avr32-toolchain)
+which is a fork of a fork of the original
+[jsnyder/avr32-toolchain: Makefile & supporting patches/scripts to build an AVR32 toolchain.](https://github.com/jsnyder/avr32-toolchain)
+
+This repo contains a Makefile that builds an AVR32 toolchain with the latest
+patches released by Atmel (now Microchip). The patches are pretty old (from 2013)
+and so is the resulting gcc compiler and toolchain (gcc 4.4.7, from 2012).
+
+The Makefile downloads, builds and installs everything.
+
+The only addition of this repo, compared to
+[kuhlix/avr32-toolchain](https://github.com/kuhlix/avr32-toolchain),
+is the possibility to execute the build in a container.
+The `build-in-container` bash script creates a container image with the
+required build tools and then executes the build inside the docker container.
+It is not required to use the containerized build, although it might
+prove useful in the distant future.
+
+Execute the build with:
+
+```commandline
+./build-in-container
+```
+
+Then wait approximately 10 minutes and the output will be in the `avr32-tools`
+folder (unless you changed it to something else)
+
+
+# Orignal README of kuhlix/avr32-toolchain
+
 == AVR32 Toolchain Builder ==
 
 This is a early implementation of a Makefile for an AVR32 toolchain

@@ -17,3 +17,5 @@
 /automake-*
 /gperf-*
 /texinfo-*
+
+/avr32-tools

@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+
+# Where the final toolchain is installed
+PREFIX=${PWD}/avr32-tools
+
+# Command to run inside docker container
+cmd="bash -c 'env PREFIX=${PREFIX} make'"
+
+# The docker image that is created and which we use for the toolchain build
+image=ubuntu-avr32-builder
+
+# Directory (
+docker_context=${image}
+
+usage() {
+    cat <<EOF
+Usage: ${0##*/} [OPTION] [IMAGE...] [-c CMD]
+
+Run container IMAGE with CMD. Default is: '${cmd}'
+If container does not exist, build it first
+
+All logging from this script is printed on STDERR.
+This means you can redirect STDOUT of this script without contaminating the
+output of the actual "docker CMD" execution.
+
+OPTIONs:
+  -c CMD   Run CMD inside container. Default is: ${cmd}
+  -r       Run as root inside container (without user mapping)
+           Default is to run as current user and group: $(id -u):$(id -g)
+  -h       Print this help
+EOF
+    exit 0
+}
+
+echo_run() { echo -e "\$ $*"; eval "$*"; }
+die() { >&2 echo "$*"; exit 1; }
+echo2() { >&2 echo "$*"; }
+
+while [ "$1" ]; do
+    case "$1" in
+        -c) cmd="$2"; shift ;;
+        -r) with_root=yes ;;
+        -h) usage && exit 0 ;;
+        -*) die "Unknown option: $1" ;;
+        *) image="$1" ;;
+    esac
+    shift
+done
+
+if ! docker image ls ${image} | grep -q "${image}"; then
+    echo2 "Docker image ${image} not found, will build it now"
+    [ -f ${docker_context}/Dockerfile ] ||
+        die "'${docker_context}/Dockerfile' not found. Cannot build"
+
+    echo_run "docker build -t ${image} ${docker_context}" ||
+        die "docker build FAILED"
+fi
+
+[ -n "${with_root}" ] ||
+    with_user="--user $(id -u):$(id -g)"
+
+mounts="-v${PWD}:${PWD} -v/etc/passwd:/etc/passwd -v/etc/group:/etc/group"
+env="-eUID=$(id -u) -eGID=$(id -g)"
+
+dockercmd="docker run -it --rm --name=${image} -w${PWD} ${mounts} ${env} ${with_user} ${image}"
+
+if [ -n "${cmd}" ]; then
+    echo2 "Running command inside container"
+    dockercmd="${dockercmd} ${cmd}"
+else
+    echo2 "Starting interactive session of container ${image}"
+    echo2 "Current directory is mounted inside the container in /cwd"
+    echo2 "Type 'exit' (or CTRL+d) to terminate the container session"
+    echo2
+fi
+
+echo2 "${dockercmd}"
+echo2
+eval "time ${dockercmd}"
