@@ -1,46 +1,57 @@
 #!/usr/bin/env bash
 
 # Where the final toolchain is installed
-PREFIX=${PWD}/avr32-tools
+PREFIX=${PWD}/avr32-toolchain
 
 # Command to run inside docker container
-cmd="bash -c 'env PREFIX=${PREFIX} make'"
+cmd="env PREFIX=${PREFIX} make -f Makefile"
+
+# Alternative command to run inside docker container
+cmd_gs="env PREFIX=${PREFIX} make -f Makefile.newlib-gs-1.16.mk"
 
 # The docker image that is created and which we use for the toolchain build
 image=ubuntu-avr32-builder
 
-# Directory (
+# Docker context directory (and location of Dockerfile)
 docker_context=${image}
 
 usage() {
     cat <<EOF
-Usage: ${0##*/} [OPTION] [IMAGE...] [-c CMD]
+Usage: ${0##*/} [OPTION] [IMAGE...] -- CMD
 
-Run container IMAGE with CMD. Default is: '${cmd}'
-If container does not exist, build it first
+Run CMD in (${image}) container. Default CMD is:
 
-All logging from this script is printed on STDERR.
-This means you can redirect STDOUT of this script without contaminating the
-output of the actual "docker CMD" execution.
+    ${cmd}
+
+If container image does not exist, it will be built using '${docker_context}/Dockerfile'
 
 OPTIONs:
-  -c CMD   Run CMD inside container. Default is: ${cmd}
+  -gs      Use build command that will use newlib v1.16.0 with GomSpace modifications
+           See https://github.com/GomSpace/avr32-newlib
+
+Misc OPTIONs:
   -r       Run as root inside container (without user mapping)
            Default is to run as current user and group: $(id -u):$(id -g)
+  -n       Dryrun
   -h       Print this help
 EOF
     exit 0
 }
 
-echo_run() { echo -e "\$ $*"; eval "$*"; }
 die() { >&2 echo "$*"; exit 1; }
-echo2() { >&2 echo "$*"; }
+
+echo_norun() { >&2 echo -e "\$ $*"; }
+echo_dryrun() { if [ "${dryrun}" ]; then echo_norun "$*"; else echo_run "$*"; fi; }
+echo_run() { echo_norun "$*"; eval "$*"; }
 
 while [ "$1" ]; do
     case "$1" in
-        -c) cmd="$2"; shift ;;
+        -gs) cmd=${cmd_gs} ;;
         -r) with_root=yes ;;
+        -n) dryrun=yes ;;
         -h) usage && exit 0 ;;
+        --) shift; cmd="$*"; break ;;
+        ++) shift; cmd="${cmd} $*"; break ;;
         -*) die "Unknown option: $1" ;;
         *) image="$1" ;;
     esac
@@ -48,11 +59,11 @@ while [ "$1" ]; do
 done
 
 if ! docker image ls ${image} | grep -q "${image}"; then
-    echo2 "Docker image ${image} not found, will build it now"
+    echo "Docker image ${image} not found, will build it now"
     [ -f ${docker_context}/Dockerfile ] ||
         die "'${docker_context}/Dockerfile' not found. Cannot build"
 
-    echo_run "docker build -t ${image} ${docker_context}" ||
+    echo_dryrun "docker build -t ${image} ${docker_context}" ||
         die "docker build FAILED"
 fi
 
@@ -62,18 +73,17 @@ fi
 mounts="-v${PWD}:${PWD} -v/etc/passwd:/etc/passwd -v/etc/group:/etc/group"
 env="-eUID=$(id -u) -eGID=$(id -g)"
 
-dockercmd="docker run -it --rm --name=${image} -w${PWD} ${mounts} ${env} ${with_user} ${image}"
+echo_dryrun "docker stop ${image} 2>/dev/null"
+dockercmd="docker run -it --init --rm --name=${image} -w${PWD} ${mounts} ${env} ${with_user} ${image}"
 
 if [ -n "${cmd}" ]; then
-    echo2 "Running command inside container"
-    dockercmd="${dockercmd} ${cmd}"
+    echo "Running command inside container"
+    dockercmd="${dockercmd} bash -c '${cmd}'"
 else
-    echo2 "Starting interactive session of container ${image}"
-    echo2 "Current directory is mounted inside the container in /cwd"
-    echo2 "Type 'exit' (or CTRL+d) to terminate the container session"
-    echo2
+    echo "Starting interactive session of container ${image}"
+    echo "Current directory is mounted inside the container in /cwd"
+    echo "Type 'exit' (or CTRL+d) to terminate the container session"
+    echo
 fi
 
-echo2 "${dockercmd}"
-echo2
-eval "time ${dockercmd}"
+echo_dryrun "time ${dockercmd}"

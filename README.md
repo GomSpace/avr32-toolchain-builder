@@ -11,9 +11,14 @@ and so is the resulting gcc compiler and toolchain (gcc 4.4.7, from 2012).
 
 The Makefile downloads, builds and installs everything.
 
-The only addition of this repo, compared to
+The only two additions to this repo, compared to
 [kuhlix/avr32-toolchain](https://github.com/kuhlix/avr32-toolchain),
-is the possibility to execute the build in a container.
+are:
+
+  - Possibility to execute the build in a container (using `ubuntu-avr32-builder/Dockerfile`)
+  - Addition of alternative Makefile `Makefile.newlib-gs-1.16.mk` which uses
+    the `newlib` of the [GomSpace/avr32-newlib](https://github.com/GomSpace/avr32-newlib) repo
+
 The `build-in-container` bash script creates a container image with the
 required build tools and then executes the build inside the docker container.
 It is not required to use the containerized build, although it might
@@ -25,11 +30,36 @@ Execute the build with:
 ./build-in-container
 ```
 
-Then wait approximately 10 minutes and the output will be in the `avr32-tools`
+Then wait approximately 10 minutes and the output will be in the `./avr32-toolchain`
 folder (unless you changed it to something else)
 
+The released tarball has name/version: **4.4.7+Atmel3.4.2build1** denoting
+*gcc-4.4.7* with *Atmel v3.4.2 patches*. The *build1* suffix means
+first build.
 
-# Orignal README of kuhlix/avr32-toolchain
+## Newlib
+
+This avr32 toolchain uses *newlib* v1.19 (released 2011-12-19).
+
+The Gomspace version of *newlib* is v1.16.0 (released 2007-12-19) and with some
+backports from 2.2.0. The repo is
+[GomSpace/avr32-newlib: Fork of embecosm/avr32-newlib with GomSpace modifications](https://github.com/GomSpace/avr32-newlib)
+
+  - [Newlib Homepage](https://sourceware.org/newlib/info.html)
+  - [Howto: Porting newlib](https://www.embecosm.com/appnotes/ean9/html/index.html)
+
+You can build the avr32 toolchain with either version of *newlib*.
+If you want to build with the Gomspace *newlib* version then use the
+`Makefile.newlib-gs-1.16.mk` makefile instead of `Makefile`.
+To do this, you can use:
+
+```commandline
+./build-in-container -gs
+```
+
+Tip: If you onlt want to build newlib, use the Make target: `install-newlib`
+
+# Original README of kuhlix/avr32-toolchain
 
 == AVR32 Toolchain Builder ==
 
