@@ -361,12 +361,19 @@ build-newlib stamps/build-newlib: stamps/prep-newlib stamps/install-binutils sta
 	make clean ; \
 	popd ; \
 	../../newlib-$(NEWLIB_VERSION)/configure --prefix=$(PREFIX)	\
-	--with-build-time-tools=$(PREFIX)				\
-	--target=$(TARGET) --disable-newlib-supplied-syscalls		\
-	--disable-libgloss --disable-nls --disable-shared		\
-	--enable-newlib-io-long-long --enable-newlib-io-long-double	\
-	--enable-target-optspace --enable-newlib-io-pos-args		\
-	--enable-newlib-reent-small  && \
+	--with-build-time-tools=$(PREFIX) \
+	--target=$(TARGET) \
+	--disable-newlib-supplied-syscalls \
+	--disable-libgloss \
+	--disable-nls \
+	--disable-shared \
+	--enable-newlib-io-long-long \
+	--enable-newlib-io-long-double \
+	--enable-newlib-io-pos-args	\
+	--enable-newlib-reent-small \
+	--enable-target-optspace \
+	--enable-newlib-retargetable-locking \
+	&& \
 	$(MAKE) -j$(PROCS) CFLAGS_FOR_TARGET=$(NEWLIB_FLAGS) CCASFLAGS=$(NEWLIB_FLAGS) && \
 	[ -d stamps ] || mkdir stamps
 	touch stamps/build-newlib;
